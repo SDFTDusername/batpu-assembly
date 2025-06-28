@@ -13,7 +13,7 @@ impl AssemblyError {
         Self { description, line: 0 }
     }
 
-    pub fn new_lines(description: String, line: usize) -> Self {
+    pub fn new_line(description: String, line: usize) -> Self {
         Self { description, line }
     }
 }
