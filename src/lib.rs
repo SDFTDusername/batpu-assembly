@@ -18,7 +18,7 @@ pub fn instructions_to_binary(instructions: &InstructionVec, labels: &Labels) ->
         .iter()
         .enumerate()
         .map(|(i, instruction)| {
-            let result = instruction.binary(labels);
+            let result = instruction.binary(i, labels);
             match result {
                 Ok(binary) => binary,
                 Err(mut error) => {

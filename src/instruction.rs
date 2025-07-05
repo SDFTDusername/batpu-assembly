@@ -49,7 +49,7 @@ impl Instruction {
         }
     }
     
-    pub fn binary(&self, labels: &Labels) -> Result<u16, AssemblyError> {
+    pub fn binary(&self, address: usize, labels: &Labels) -> Result<u16, AssemblyError> {
         let mut binary: u16 = 0;
         binary |= (self.index() as u16 & 0b1111) << 12;
 
@@ -92,17 +92,17 @@ impl Instruction {
                 binary |= immediate.immediate() as u16 & 0b1111_1111;
             },
             Instruction::Jump(label) => {
-                let address = label.get_address(labels)?;
+                let address = label.get_address(address, labels)?;
                 binary |= address as u16 & 0b11_1111_1111;
             },
             Instruction::Branch(condition, label) => {
                 binary |= (condition.index() as u16 & 0b11) << 10;
 
-                let address = label.get_address(labels)?;
+                let address = label.get_address(address, labels)?;
                 binary |= address as u16 & 0b11_1111_1111;
             },
             Instruction::Call(label) => {
-                let address = label.get_address(labels)?;
+                let address = label.get_address(address, labels)?;
                 binary |= address as u16 & 0b11_1111_1111;
             },
             Instruction::MemoryLoad(a, b, offset) => {
