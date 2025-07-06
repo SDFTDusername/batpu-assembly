@@ -9,7 +9,7 @@ pub mod instruction;
 pub type Labels = HashMap<String, usize>;
 
 pub type InstructionVec = Vec<Instruction>;
-pub type BinaryVec = Vec<u16>;
+pub type BinaryVec = Vec<u32>;
 
 pub fn instructions_to_binary(instructions: &InstructionVec, labels: &Labels) -> Result<BinaryVec, Vec<AssemblyError>> {
     let mut errors: Vec<AssemblyError> = Vec::new();
