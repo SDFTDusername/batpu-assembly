@@ -8,12 +8,12 @@ pub fn instructions_to_binary(instructions: &InstructionVec, labels: &Labels) ->
     let binary = instructions
         .iter()
         .enumerate()
-        .map(|(i, instruction)| {
-            let result = instruction.binary(i as u32, labels);
+        .map(|(address, instruction)| {
+            let result = instruction.binary(address as u32, labels);
             match result {
                 Ok(binary) => binary,
                 Err(mut error) => {
-                    error.line = i as u32 + 1;
+                    error.address = address as u32;
                     errors.push(error);
                     0
                 }
@@ -34,12 +34,12 @@ pub fn binary_to_instructions(binary: &BinaryVec) -> Result<InstructionVec, Vec<
     let instructions = binary
         .iter()
         .enumerate()
-        .map(|(i, binary)| {
+        .map(|(address, binary)| {
             let result = Instruction::instruction(*binary);
             match result {
                 Ok(instruction) => instruction,
                 Err(mut error) => {
-                    error.line = i as u32 + 1;
+                    error.address = address as u32;
                     errors.push(error);
                     Instruction::NoOperation
                 }
