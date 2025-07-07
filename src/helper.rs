@@ -13,7 +13,7 @@ pub fn instructions_to_binary(instructions: &InstructionVec, labels: &Labels) ->
             match result {
                 Ok(binary) => binary,
                 Err(mut error) => {
-                    error.line = i + 1;
+                    error.line = i as u32 + 1;
                     errors.push(error);
                     0
                 }
@@ -39,7 +39,7 @@ pub fn binary_to_instructions(binary: &BinaryVec) -> Result<InstructionVec, Vec<
             match result {
                 Ok(instruction) => instruction,
                 Err(mut error) => {
-                    error.line = i + 1;
+                    error.line = i as u32 + 1;
                     errors.push(error);
                     Instruction::NoOperation
                 }

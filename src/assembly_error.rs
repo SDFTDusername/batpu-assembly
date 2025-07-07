@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssemblyError {
     pub description: String,
-    pub line: usize
+    pub line: u32
 }
 
 impl AssemblyError {
@@ -13,7 +13,7 @@ impl AssemblyError {
         Self { description, line: 0 }
     }
 
-    pub fn new_line(description: String, line: usize) -> Self {
+    pub fn new_line(description: String, line: u32) -> Self {
         Self { description, line }
     }
 }
