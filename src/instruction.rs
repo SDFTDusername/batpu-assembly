@@ -150,7 +150,7 @@ impl Instruction {
             Register::new(register)
         };
 
-        let get_immediate = |binary: Binary| -> Result<Immediate, AssemblyError> {
+        let get_immediate = |binary: Binary| -> Immediate {
             let immediate = binary as u32 & immediate::MASK;
             Immediate::new(immediate)
         };
@@ -223,13 +223,13 @@ impl Instruction {
             8 => { // LoadImmediate
                 Instruction::LoadImmediate(
                     get_register(binary, 2)?,
-                    get_immediate(binary)?
+                    get_immediate(binary)
                 )
             },
             9 => { // AddImmediate
                 Instruction::AddImmediate(
                     get_register(binary, 2)?,
-                    get_immediate(binary)?
+                    get_immediate(binary)
                 )
             },
             10 => { // Jump
