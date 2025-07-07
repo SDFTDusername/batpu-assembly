@@ -6,6 +6,7 @@ pub mod assembly_error;
 pub mod components;
 pub mod instruction;
 pub mod helper;
+pub mod opcode;
 
 pub type Labels = HashMap<String, Immediate>;
 

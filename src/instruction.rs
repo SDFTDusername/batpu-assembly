@@ -6,9 +6,9 @@ use crate::components::location::Location;
 use crate::components::offset::Offset;
 use crate::components::register::Register;
 use crate::components::{address, condition, immediate, offset, register};
-use crate::{bit_consts, Binary, Labels};
+use crate::{opcode, Binary, Labels};
 
-bit_consts!(4);
+pub const BITS: u32 = size_of::<Binary>() as u32 * 8;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
@@ -54,7 +54,7 @@ impl Instruction {
     
     pub fn binary(&self, address: u32, labels: &Labels) -> Result<Binary, AssemblyError> {
         let mut binary: Binary = 0;
-        binary |= ((self.index() & MASK) << size_of::<Binary>()) as Binary;
+        binary |= ((self.index() & opcode::MASK) << (BITS - opcode::BITS)) as Binary;
 
         let add_register = |binary: &mut Binary, register: &Register, index: u32| {
             *binary |= ((register.register() & register::MASK) << (register::BITS * index)) as Binary;
@@ -71,7 +71,7 @@ impl Instruction {
         };
 
         let add_condition = |binary: &mut Binary, condition: &Condition| {
-            *binary |= ((condition.index() & condition::MASK) << (size_of::<Binary>() as u32 - BITS - condition::BITS)) as Binary;
+            *binary |= ((condition.index() & condition::MASK) << (BITS - opcode::BITS - condition::BITS)) as Binary;
         };
 
         let add_offset = |binary: &mut Binary, offset: &Offset| {
@@ -143,7 +143,7 @@ impl Instruction {
     }
 
     pub fn instruction(binary: Binary) -> Result<Instruction, AssemblyError> {
-        let opcode = (binary >> (size_of::<Binary>() as u32 - BITS)) as u32 & MASK;
+        let opcode = (binary >> (BITS - opcode::BITS)) as u32 & opcode::MASK;
 
         let get_register = |binary: Binary, index: u32| -> Result<Register, AssemblyError> {
             let register = (binary as u32 >> (register::BITS * index)) & register::MASK;
@@ -162,7 +162,7 @@ impl Instruction {
         };
 
         let get_condition = |binary: Binary| -> Result<Condition, AssemblyError> {
-            let condition = (binary as u32 >> (size_of::<Binary>() as u32 - BITS - condition::BITS)) & condition::MASK;
+            let condition = (binary as u32 >> (BITS - opcode::BITS - condition::BITS)) & condition::MASK;
             Condition::from_index(condition)
         };
 
@@ -266,7 +266,7 @@ impl Instruction {
                 )
             },
             _ => {
-                return Err(AssemblyError::new(format!("Unknown opcode {} ({:#bits$b})", opcode, opcode, bits=BITS as usize)))
+                return Err(AssemblyError::new(format!("Unknown opcode {} ({:#bits$b})", opcode, opcode, bits=opcode::BITS as usize)))
             }
         };
 
