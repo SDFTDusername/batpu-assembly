@@ -13,7 +13,7 @@ instructions.push(
     // Load 5 into r1
     Instruction::LoadImmediate(
         Register::new(1).unwrap(),
-        Immediate::new(5).unwrap()
+        Immediate::new(5)
     )
 );
 
