@@ -1,4 +1,3 @@
-use crate::components::immediate::Immediate;
 use crate::instruction::Instruction;
 use std::collections::HashMap;
 
@@ -8,7 +7,7 @@ pub mod instruction;
 pub mod helper;
 pub mod opcode;
 
-pub type Labels = HashMap<String, Immediate>;
+pub type Labels = HashMap<String, u32>;
 
 pub type InstructionVec = Vec<Instruction>;
 

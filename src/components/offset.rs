@@ -27,7 +27,7 @@ impl Offset {
 
     fn error(offset: i32) -> Result<(), AssemblyError> {
         if offset < MIN_SIGNED_VALUE || offset > MAX_SIGNED_VALUE {
-            Err(AssemblyError::new(format!("Offset {} out of range, expected -{}-{}", offset, MIN_SIGNED_VALUE, MAX_SIGNED_VALUE)))
+            Err(AssemblyError::new(format!("Offset {} out of range, expected {}-{}", offset, MIN_SIGNED_VALUE, MAX_SIGNED_VALUE)))
         } else {
             Ok(())
         }

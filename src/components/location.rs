@@ -23,7 +23,7 @@ impl Location {
             Location::Label(label) => {
                 let result = labels.get(label);
                 match result {
-                    Some(value) => Ok(value.immediate()),
+                    Some(value) => Ok(*value),
                     None => Err(AssemblyError::new(format!("Unknown label \"{}\"", label)).into())
                 }
             }
