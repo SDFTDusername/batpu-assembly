@@ -77,7 +77,7 @@ impl Instruction {
         let add_offset = |binary: &mut Binary, offset: &Offset| {
             *binary |= (offset.offset() as u32 & offset::MASK) as Binary;
         };
-
+        
         match self {
             Instruction::Addition(a, b, c) => {
                 add_register(&mut binary, a, 2);

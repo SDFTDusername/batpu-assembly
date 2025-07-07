@@ -18,7 +18,7 @@ pub type BinaryVec = Vec<Binary>;
 #[macro_export] macro_rules! bit_consts {
     ($bits:expr) => {
         pub const BITS: u32 = $bits;
-        pub const MASK: u32 = 1 << BITS - 1;
+        pub const MASK: u32 = (1 << BITS) - 1;
         
         pub const MAX_POSSIBLE_COUNT: u32 = 2_u32.pow(BITS);
         pub const MAX_VALUE: u32 = MAX_POSSIBLE_COUNT - 1;
