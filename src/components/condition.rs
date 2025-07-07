@@ -28,7 +28,7 @@ impl Condition {
             2 => Ok(Condition::Carry),
             3 => Ok(Condition::NotCarry),
             _ => {
-                Err(AssemblyError::new(format!("Unknown condition {} ({:#bits$b})", condition, condition, bits=BITS as usize)))
+                Err(AssemblyError::new(format!("Unknown condition {} ({:#bits$b})", condition, condition, bits=BITS as usize + 2)))
             }
         }
     }

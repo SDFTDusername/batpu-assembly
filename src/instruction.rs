@@ -266,7 +266,7 @@ impl Instruction {
                 )
             },
             _ => {
-                return Err(AssemblyError::new(format!("Unknown opcode {} ({:#bits$b})", opcode, opcode, bits=opcode::BITS as usize)))
+                return Err(AssemblyError::new(format!("Unknown opcode {} ({:#bits$b})", opcode, opcode, bits=opcode::BITS as usize + 2)))
             }
         };
 
