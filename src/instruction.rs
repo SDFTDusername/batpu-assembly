@@ -5,7 +5,10 @@ use crate::components::immediate::Immediate;
 use crate::components::location::Location;
 use crate::components::offset::Offset;
 use crate::components::register::Register;
-use crate::Labels;
+use crate::components::{address, condition, immediate, offset, register};
+use crate::{bit_consts, Binary, Labels};
+
+bit_consts!(4);
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
@@ -28,7 +31,7 @@ pub enum Instruction {
 }
 
 impl Instruction {
-    pub fn index(&self) -> u8 {
+    pub fn index(&self) -> u32 {
         match self {
             Instruction::NoOperation            => 0,
             Instruction::Halt                   => 1,
@@ -49,71 +52,89 @@ impl Instruction {
         }
     }
     
-    pub fn binary(&self, address: usize, labels: &Labels) -> Result<u16, AssemblyError> {
-        let mut binary: u16 = 0;
-        binary |= (self.index() as u16 & 0b1111) << 12;
+    pub fn binary(&self, address: u32, labels: &Labels) -> Result<Binary, AssemblyError> {
+        let mut binary: Binary = 0;
+        binary |= ((self.index() & MASK) << size_of::<Binary>()) as Binary;
+
+        let add_register = |binary: &mut Binary, register: &Register, index: u32| {
+            *binary |= ((register.register() & register::MASK) << (register::BITS * index)) as Binary;
+        };
+
+        let add_immediate = |binary: &mut Binary, immediate: &Immediate| {
+            *binary |= (immediate.immediate() & immediate::MASK) as Binary;
+        };
+
+        let add_location = |binary: &mut Binary, location: &Location| -> Result<(), AssemblyError> {
+            let address = location.get_address(address, labels)?;
+            *binary |= (address & address::MASK) as Binary;
+            Ok(())
+        };
+
+        let add_condition = |binary: &mut Binary, condition: &Condition| {
+            *binary |= ((condition.index() & condition::MASK) << (size_of::<Binary>() as u32 - BITS - condition::BITS)) as Binary;
+        };
+
+        let add_offset = |binary: &mut Binary, offset: &Offset| {
+            *binary |= (offset.offset() as u32 & offset::MASK) as Binary;
+        };
 
         match self {
             Instruction::Addition(a, b, c) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= (b.register() as u16 & 0b1111) << 4;
-                binary |= c.register() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, b, 1);
+                add_register(&mut binary, c, 0);
             },
             Instruction::Subtraction(a, b, c) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= (b.register() as u16 & 0b1111) << 4;
-                binary |= c.register() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, b, 1);
+                add_register(&mut binary, c, 0);
             },
             Instruction::BitwiseNOR(a, b, c) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= (b.register() as u16 & 0b1111) << 4;
-                binary |= c.register() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, b, 1);
+                add_register(&mut binary, c, 0);
             },
             Instruction::BitwiseAND(a, b, c) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= (b.register() as u16 & 0b1111) << 4;
-                binary |= c.register() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, b, 1);
+                add_register(&mut binary, c, 0);
             },
             Instruction::BitwiseXOR(a, b, c) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= (b.register() as u16 & 0b1111) << 4;
-                binary |= c.register() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, b, 1);
+                add_register(&mut binary, c, 0);
             },
             Instruction::RightShift(a, c) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= c.register() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, c, 0);
             },
             Instruction::LoadImmediate(a, immediate) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= immediate.immediate() as u16 & 0b1111_1111;
+                add_register(&mut binary, a, 2);
+                add_immediate(&mut binary, immediate);
             },
             Instruction::AddImmediate(a, immediate) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= immediate.immediate() as u16 & 0b1111_1111;
+                add_register(&mut binary, a, 2);
+                add_immediate(&mut binary, immediate);
             },
-            Instruction::Jump(label) => {
-                let address = label.get_address(address, labels)?;
-                binary |= address as u16 & 0b11_1111_1111;
+            Instruction::Jump(location) => {
+                add_location(&mut binary, location)?;
             },
-            Instruction::Branch(condition, label) => {
-                binary |= (condition.index() as u16 & 0b11) << 10;
-
-                let address = label.get_address(address, labels)?;
-                binary |= address as u16 & 0b11_1111_1111;
-            },
-            Instruction::Call(label) => {
-                let address = label.get_address(address, labels)?;
-                binary |= address as u16 & 0b11_1111_1111;
-            },
+            Instruction::Branch(condition, location) => {
+                add_condition(&mut binary, condition);
+                add_location(&mut binary, location)?;
+            }
+            Instruction::Call(location) => {
+                add_location(&mut binary, location)?;
+            }
             Instruction::MemoryLoad(a, b, offset) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= (b.register() as u16 & 0b1111) << 4;
-                binary |= offset.offset() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, b, 1);
+                add_offset(&mut binary, offset);
             },
             Instruction::MemoryStore(a, b, offset) => {
-                binary |= (a.register() as u16 & 0b1111) << 8;
-                binary |= (b.register() as u16 & 0b1111) << 4;
-                binary |= offset.offset() as u16 & 0b1111;
+                add_register(&mut binary, a, 2);
+                add_register(&mut binary, b, 1);
+                add_offset(&mut binary, offset);
             },
             _ => {}
         }
@@ -121,8 +142,35 @@ impl Instruction {
         Ok(binary)
     }
 
-    pub fn instruction(binary: u16) -> Result<Instruction, AssemblyError> {
-        let opcode = (binary >> 12) & 0b1111;
+    pub fn instruction(binary: Binary) -> Result<Instruction, AssemblyError> {
+        let opcode = (binary >> (size_of::<Binary>() as u32 - BITS)) as u32 & MASK;
+
+        let get_register = |binary: Binary, index: u32| -> Result<Register, AssemblyError> {
+            let register = (binary as u32 >> (register::BITS * index)) & register::MASK;
+            Register::new(register)
+        };
+
+        let get_immediate = |binary: Binary| -> Result<Immediate, AssemblyError> {
+            let immediate = binary as u32 & immediate::MASK;
+            Immediate::new(immediate)
+        };
+
+        let get_location = |binary: Binary| -> Result<Location, AssemblyError> {
+            let address = binary as u32 & address::MASK;
+            let address = Address::new(address)?;
+            Ok(Location::Address(address))
+        };
+
+        let get_condition = |binary: Binary| -> Result<Condition, AssemblyError> {
+            let condition = (binary as u32 >> (size_of::<Binary>() as u32 - BITS - condition::BITS)) & condition::MASK;
+            Condition::from_index(condition)
+        };
+
+        let get_offset = |binary: Binary| -> Result<Offset, AssemblyError> {
+            let offset = binary as u32 & offset::MASK;
+            let offset_signed = (offset << 16) as i32 >> 16;
+            Offset::new(offset_signed)
+        };
 
         let instruction = match opcode {
             0 => { // NoOperation
@@ -133,71 +181,71 @@ impl Instruction {
             },
             2 => { // Addition
                 Instruction::Addition(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new(((binary >> 4) & 0b1111) as u8)?,
-                    Register::new((binary & 0b1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 1)?,
+                    get_register(binary, 0)?
                 )
             },
             3 => { // Subtraction
                 Instruction::Subtraction(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new(((binary >> 4) & 0b1111) as u8)?,
-                    Register::new((binary & 0b1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 1)?,
+                    get_register(binary, 0)?
                 )
             },
             4 => { // BitwiseNOR
                 Instruction::BitwiseNOR(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new(((binary >> 4) & 0b1111) as u8)?,
-                    Register::new((binary & 0b1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 1)?,
+                    get_register(binary, 0)?
                 )
             },
             5 => { // BitwiseAND
                 Instruction::BitwiseAND(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new(((binary >> 4) & 0b1111) as u8)?,
-                    Register::new((binary & 0b1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 1)?,
+                    get_register(binary, 0)?
                 )
             },
             6 => { // BitwiseXOR
                 Instruction::BitwiseXOR(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new(((binary >> 4) & 0b1111) as u8)?,
-                    Register::new((binary & 0b1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 1)?,
+                    get_register(binary, 0)?
                 )
             },
             7 => { // RightShift
                 Instruction::RightShift(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new((binary & 0b1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 0)?
                 )
             },
             8 => { // LoadImmediate
                 Instruction::LoadImmediate(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Immediate::new((binary & 0b1111_1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_immediate(binary)?
                 )
             },
             9 => { // AddImmediate
                 Instruction::AddImmediate(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Immediate::new((binary & 0b1111_1111) as u8)?
+                    get_register(binary, 2)?,
+                    get_immediate(binary)?
                 )
             },
             10 => { // Jump
                 Instruction::Jump(
-                    Location::Address(Address::new(binary & 0b11_1111_1111)?)
+                    get_location(binary)?
                 )
             },
             11 => { // Branch
                 Instruction::Branch(
-                    Condition::from_index(((binary >> 10) & 0b11) as u8)?,
-                    Location::Address(Address::new(binary & 0b11_1111_1111)?)
+                    get_condition(binary)?,
+                    get_location(binary)?
                 )
             },
             12 => { // Call
                 Instruction::Call(
-                    Location::Address(Address::new(binary & 0b11_1111_1111)?)
+                    get_location(binary)?
                 )
             },
             13 => { // Return
@@ -205,20 +253,20 @@ impl Instruction {
             },
             14 => { // MemoryLoad
                 Instruction::MemoryLoad(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new(((binary >> 4) & 0b1111) as u8)?,
-                    Offset::new(((((binary & 0b1111) as u8) << 4) as i8) >> 4)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 1)?,
+                    get_offset(binary)?
                 )
             },
             15 => { // MemoryStore
                 Instruction::MemoryStore(
-                    Register::new(((binary >> 8) & 0b1111) as u8)?,
-                    Register::new(((binary >> 4) & 0b1111) as u8)?,
-                    Offset::new(((((binary & 0b1111) as u8) << 4) as i8) >> 4)?
+                    get_register(binary, 2)?,
+                    get_register(binary, 1)?,
+                    get_offset(binary)?
                 )
             },
             _ => {
-                return Err(AssemblyError::new(format!("Unknown opcode {} ({:#006b})", opcode, opcode)))
+                return Err(AssemblyError::new(format!("Unknown opcode {} ({:#bits$b})", opcode, opcode, bits=BITS as usize)))
             }
         };
 
