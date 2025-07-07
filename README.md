@@ -10,12 +10,12 @@ let mut instructions: InstructionVec = Vec::new();
 let labels: Labels = HashMap::new();
 
 instructions.push(
+    // Load 5 into r1
     Instruction::LoadImmediate(
-        Register::new(1),
-        Immediate::new(5)
-    ) // Load 5 into r1
+        Register::new(1).unwrap(),
+        Immediate::new(5).unwrap()
+    )
 );
 
-let machine_code = instructions_to_binary(&instructions, &labels)
-    .unwrap();
+let machine_code = instructions_to_binary(&instructions, &labels).unwrap();
 ```

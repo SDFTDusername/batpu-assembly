@@ -133,71 +133,71 @@ impl Instruction {
             },
             2 => { // Addition
                 Instruction::Addition(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new(((binary >> 4) & 0b1111) as u8),
-                    Register::new((binary & 0b1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new(((binary >> 4) & 0b1111) as u8)?,
+                    Register::new((binary & 0b1111) as u8)?
                 )
             },
             3 => { // Subtraction
                 Instruction::Subtraction(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new(((binary >> 4) & 0b1111) as u8),
-                    Register::new((binary & 0b1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new(((binary >> 4) & 0b1111) as u8)?,
+                    Register::new((binary & 0b1111) as u8)?
                 )
             },
             4 => { // BitwiseNOR
                 Instruction::BitwiseNOR(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new(((binary >> 4) & 0b1111) as u8),
-                    Register::new((binary & 0b1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new(((binary >> 4) & 0b1111) as u8)?,
+                    Register::new((binary & 0b1111) as u8)?
                 )
             },
             5 => { // BitwiseAND
                 Instruction::BitwiseAND(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new(((binary >> 4) & 0b1111) as u8),
-                    Register::new((binary & 0b1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new(((binary >> 4) & 0b1111) as u8)?,
+                    Register::new((binary & 0b1111) as u8)?
                 )
             },
             6 => { // BitwiseXOR
                 Instruction::BitwiseXOR(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new(((binary >> 4) & 0b1111) as u8),
-                    Register::new((binary & 0b1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new(((binary >> 4) & 0b1111) as u8)?,
+                    Register::new((binary & 0b1111) as u8)?
                 )
             },
             7 => { // RightShift
                 Instruction::RightShift(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new((binary & 0b1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new((binary & 0b1111) as u8)?
                 )
             },
             8 => { // LoadImmediate
                 Instruction::LoadImmediate(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Immediate::new((binary & 0b1111_1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Immediate::new((binary & 0b1111_1111) as u8)?
                 )
             },
             9 => { // AddImmediate
                 Instruction::AddImmediate(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Immediate::new((binary & 0b1111_1111) as u8)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Immediate::new((binary & 0b1111_1111) as u8)?
                 )
             },
             10 => { // Jump
                 Instruction::Jump(
-                    Location::Address(Address::new(binary & 0b11_1111_1111))
+                    Location::Address(Address::new(binary & 0b11_1111_1111)?)
                 )
             },
             11 => { // Branch
                 Instruction::Branch(
                     Condition::from_index(((binary >> 10) & 0b11) as u8)?,
-                    Location::Address(Address::new(binary & 0b11_1111_1111))
+                    Location::Address(Address::new(binary & 0b11_1111_1111)?)
                 )
             },
             12 => { // Call
                 Instruction::Call(
-                    Location::Address(Address::new(binary & 0b11_1111_1111))
+                    Location::Address(Address::new(binary & 0b11_1111_1111)?)
                 )
             },
             13 => { // Return
@@ -205,16 +205,16 @@ impl Instruction {
             },
             14 => { // MemoryLoad
                 Instruction::MemoryLoad(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new(((binary >> 4) & 0b1111) as u8),
-                    Offset::new(((((binary & 0b1111) as u8) << 4) as i8) >> 4)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new(((binary >> 4) & 0b1111) as u8)?,
+                    Offset::new(((((binary & 0b1111) as u8) << 4) as i8) >> 4)?
                 )
             },
             15 => { // MemoryStore
                 Instruction::MemoryStore(
-                    Register::new(((binary >> 8) & 0b1111) as u8),
-                    Register::new(((binary >> 4) & 0b1111) as u8),
-                    Offset::new(((((binary & 0b1111) as u8) << 4) as i8) >> 4)
+                    Register::new(((binary >> 8) & 0b1111) as u8)?,
+                    Register::new(((binary >> 4) & 0b1111) as u8)?,
+                    Offset::new(((((binary & 0b1111) as u8) << 4) as i8) >> 4)?
                 )
             },
             _ => {
