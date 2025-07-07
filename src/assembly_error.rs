@@ -5,25 +5,30 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AssemblyError {
     pub description: String,
-    pub address: u32
+    pub address: Option<u32>
 }
 
 impl AssemblyError {
     pub fn new(description: String) -> Self {
-        Self { description, address: 0 }
+        Self {
+            description,
+            address: None
+        }
     }
 
     pub fn new_address(description: String, address: u32) -> Self {
-        Self { description, address }
+        Self {
+            description,
+            address: Some(address)
+        }
     }
 }
 
 impl Display for AssemblyError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if self.address == 0 {
-            write!(f, "{}", self.description)
-        } else {
-            write!(f, "[Address {}] {}", self.address, self.description)
+        match self.address {
+            Some(address) => write!(f, "[Address {}] {}", address, self.description),
+            None => write!(f, "{}", self.description)
         }
     }
 }
