@@ -168,7 +168,7 @@ impl Instruction {
 
         let get_offset = |binary: Binary| -> Result<Offset, AssemblyError> {
             let offset = binary as u32 & offset::MASK;
-            let offset_signed = (offset << 16) as i32 >> 16;
+            let offset_signed = ((offset as i32) << (32 - offset::BITS)) >> (32 - offset::BITS);
             Offset::new(offset_signed)
         };
 
